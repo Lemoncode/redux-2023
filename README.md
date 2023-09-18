@@ -6,6 +6,8 @@ Si has llegado aquí es porque:
   - Seguramnte te haya tocado un mantenimiento (¡Buena suerte compañero!).
   - Igual has encontrado un proyecto en el que puede aplicar.
 
+Cada ejemplo incluye una guía paso a paso para que puedas reproducir el ejemplo desde cero (bueno partiendo del boiler plate que está también en el repo).
+
 Como hemos enfocado este repositorio:
   1. Hola Redux "antiguo"... suponemos que seguramente has llegado aquí
   2. Hola Redux "tipado"... vamos a tipar hasta los payloads de las acciones.
