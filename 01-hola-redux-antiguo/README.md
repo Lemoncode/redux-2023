@@ -568,13 +568,15 @@ _./src/actions/base.actions.ts_
 
 ```diff
 
-+ export const ActionTypes = {
-+  UPDATE_USER_NAME: "[USER_PROFILE] Update user name",
-+ };
-
++ export enum ActionTypes {
++  UPDATE_USER_NAME = "[USER_PROFILE] Update user name",
++ }
++
 + export type BaseAction =
-+  | {type: ActionTypes.UPDATE_USER_NAME, payload: string};
-
++  |  {
++  type: ActionTypes.UPDATE_USER_NAME;
++  payload: string;
++ };
 
 - export interface BaseAction {
 -  type: string;
@@ -597,6 +599,40 @@ export const createUpdateUserNameAction = (name: string): BaseAction => ({
 + type: ActionTypes.UPDATE_USER_NAME,
   payload: name,
 });
+```
+
+En el reducer
+
+_./src/reducers/user-profile.reducer.ts_
+
+```diff
+- import { BaseAction, UPDATE_USER_NAME } from "../actions";
++ import { BaseAction, ActionTypes } from "../actions";
+
+const handleUpdateUserName = (
+  state: UserProfileState,
+  name: string
+): UserProfileState => ({
+  ...state,
+  name,
+});
+
+export interface UserProfileState {
+  name: string;
+}
+
+export const createDefaultUserProfile = (): UserProfileState => ({
+  name: "Sin nombre",
+});
+
+export const userProfileReducer = (
+  state: UserProfileState = createDefaultUserProfile(),
+  action: BaseAction
+) => {
+   switch (action.type) {
+-    case UPDATE_USER_NAME:
++ case ActionTypes.UPDATE_USER_NAME:
+
 ```
 
 Y ahora en el reducer una vez que nos metemos en el case del switch el payload se tipa como string.
