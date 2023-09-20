@@ -610,9 +610,25 @@ A tener en cuenta:
 - Para comunicar reducers se utilizan acciones (que se pasan por todos los reducers).
 - Si necesitas combinar datos de dos reducers, o bien los pides en el mapStateToProps o bien puedes usar campos calculados, había una librería que se llamaba [reselect](https://github.com/reduxjs/reselect) que si la están usando en el proyecto legacy que has entrado te tocará estudiar (es potente pero requiere su tiempo de estudio), o también en redux moderno tienes algo parecido ya incorporado.
 
-# Maquina del tiempo y devools
+# Maquina del tiempo y devtools
 
-TODO !!!!
+Ahora viene el momento _vendida de moto_ de Redux, vamos a ver como podemos viajar en el tiempo y ver como estaba la aplicación en un momento determinado.
+
+Prueba a abrir las dev tools, juega a rellenar varias veces el text box, y ahora dale al play, ahí lo tienes puede ver que hizo el usuario paso a paso, incluso puedes borrar acciones, o añadir nuevas.
+
+Esto es una pasada, de hecho un juego de tablero online, lo utilizamos de la siguiente manera:
+
+- El usuario empieza partida.
+- La aplicación peta
+- Recibimos como parte del log la reproducción completa de los pasos que dió el usuario (eliminibamos antes datos sensible como la clave).
+- Así podíamos reproducir paso a paso que hizo el jugador.
+
+¿Esto parece chulo verdad? Pues el precio que te toca pagar es alto:
+
+- Tienes que tener todo el estado de tu aplicación en Redux (esto ya te aconsejan que no lo hagas salvo causa justificada).
+- Había que conectar el router spa (react-router) con redux, esto se pudo hacer durante un tiempo, hasta que el equipo de React Router dijo que no era buena idea, y que no lo iban a mantener.
+
+Asi que bueno... esta chulo, pero no es todo lo práctico que debería.
 
 # Sobre estructura de carpetas
 
