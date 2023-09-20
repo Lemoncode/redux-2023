@@ -1,8 +1,6 @@
-import { BaseAction } from "./base.actions";
-
-export const UPDATE_USER_NAME = "[USER_PROFILE] Update user name";
+import { BaseAction, ActionTypes } from "./base.actions";
 
 export const createUpdateUserNameAction = (name: string): BaseAction => ({
-  type: UPDATE_USER_NAME,
+  type: ActionTypes.UPDATE_USER_NAME,
   payload: name,
 });

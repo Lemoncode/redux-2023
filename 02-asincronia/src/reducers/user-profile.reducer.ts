@@ -1,4 +1,4 @@
-import { BaseAction, UPDATE_USER_NAME } from "../actions";
+import { BaseAction, ActionTypes } from "../actions";
 
 const handleUpdateUserName = (
   state: UserProfileState,
@@ -21,7 +21,7 @@ export const userProfileReducer = (
   action: BaseAction
 ) => {
   switch (action.type) {
-    case UPDATE_USER_NAME:
+    case ActionTypes.UPDATE_USER_NAME:
       return handleUpdateUserName(state, action.payload);
   }
 
