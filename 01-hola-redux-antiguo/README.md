@@ -370,22 +370,299 @@ import { BaseAction } from "./base.actions";
 
 export const UPDATE_USER_NAME = "[USER_PROFILE] Update user name";
 
-const createUpdateUserNameAction = (name: string): BaseAction => ({
+export const createUpdateUserNameAction = (name: string): BaseAction => ({
   type: UPDATE_USER_NAME,
   payload: name,
 });
 ```
 
+Vamos a crear un barrel para agrupar todo esto
+
+_./src/actions/index.ts_
+
+```typescript
+export * from "./base.actions";
+export * from "./user-profile.actions";
+```
+
+Ya tenemos la acción, fíjate que le hemos puesto un prefijo ¿Por qué? Porque estas acciones pasan por todos los reducers, y si no ponemos un prefijo, podríamos tener colisiones de nombres.
+
+Vamos ahora a usarla en nuestro reducer:
+
+_./src/reducers/user-profile.reducer.ts_
+
+```diff
++ import { BaseAction } from "../actions";
+
+export interface UserProfileState {
+  name: string;
+}
+
+export const createDefaultUserProfile = (): UserProfileState => ({
+  name: "Sin nombre",
+});
+
+export const userProfileReducer = (
+  state: UserProfileState = createDefaultUserProfile(),
+-   action: any
++   action: BaseAction
+) => {
+
++  switch (action.type) {
++    case UPDATE_USER_NAME:
++      return {
++        ...state,
++        name: action.payload,
++      };
++ }
+
+  return state;
+};
+```
+
+¿Qué estamos haciendo aquí?
+
+- Me viene una acción y pasa por el reducer (aquí tenemos un switch).
+- ¿Qué la acción no es la que espero? Pues devuelvo el estado tal cual.
+- ¿Qué la acción es la que espero? Pues devuelvo el estado actualizado con el nuevo nombre.
+
+Si te fijas esta actualización es inmutable, es decir lo que era el estado actual no lo modifico (no lo muto), si no que creo un nuevo objeto, varias cosas a tener en cuenta sobre esto:
+
+- Nos complicamos la vida, y en algunos casos es un auténtico tostón actualizar el estado de manera inmutable.
+- Ganamos mucho en que nuestro código es más robusto y mantenible (un cambio en un objeto no afecta a otro sin avisar).
+- Si no te suena lo que son _los tres puntitos_ (spread operator), te toca ponerte a estudiar ES6: https://developer.mozilla.org/es/docs/Web/JavaScript/Referencia/Operadores/Spread_operator
+- La recomendación actual es utilizar una librería como _immer_ para gestionar la inmutabilidad: https://immerjs.github.io/immer/docs/introduction
+
+Otro palabro más para terminar _un reducer_ se dice que es una _función pura_ ¿Esto que es?
+
+Una función que no tiene efectos secundarios, es decir que no modifica nada fuera de ella, sólo devuelve un valor en función de los parámetros de entrada.
+
+¿Qué NO son funciones puras?
+
+- Una función que utilice una variable que éste definida fuera de ella.
+- Una función qu lee de una API Rest.
+- Una función que genera números aleatorios.
+
+Lo que se busca es algo determinista, los efectos colaterales (side effects) aportan caos e intentamos aislaros en otro sitio.
+
+Un último ajuste, en un reducer lo normal es sacar cada caso en una función aparte, algo así como:
+
+_./src/reducers/user-profile.reducer.ts_
+
+```diff
+
++ const handleUpdateUserName = (
++   state: UserProfileState,
++   name: string
++ ): UserProfileState => ({
++   ...state,
++   name,
++ });
+
+export interface UserProfileState {
+  name: string;
+}
+
+export const createDefaultUserProfile = (): UserProfileState => ({
+  name: "Sin nombre",
+});
+
+export const userProfileReducer = (
+  state: UserProfileState = createDefaultUserProfile(),
+  action: BaseAction
+) => {
+  switch (action.type) {
+    case UPDATE_USER_NAME:
+-      return {
+-        ...state,
+-        name: action.payload,
+-      };
++     return handleUpdateUserName(state, action.payload);
+  }
+
+  return state;
+};
+```
+
+Ahora toca exponer esa acción al componente para que pueda modificar el estado de la aplicación.
+
+¿Te acuerdas del mapDispatchToProps? Pues eso es lo que vamos a hacer:
+
+_./src/user-profile/user-profile.container.tsx_
+
+```diff
+import { connect } from "react-redux";
+import { UserProfileComponent } from "./user-profile.component";
+import { AppState } from "../reducers";
++ import { BaseAction, createUpdateUserNameAction } from "../actions";
++ import { Dispatch } from "redux";
+
+const mapStateToProps = (state: AppState) => ({
+  name: state.userProfile.name,
+});
+
++ const mapDispatchToProps = (dispatch: Dispatch<BaseAction>) => ({
++   onUpdateUserName: (name: string) => dispatch(createUpdateUserNameAction(name)),
++ });
+
+export const UserProfileContainer =
+-  connect(mapStateToProps)(UserProfileComponent);
++  connect(mapStateToProps, mapDispatchToProps)(UserProfileComponent);
+```
+
+¿Qué hacemos aquí? ... ¿Te acuerdas el famoso dispatcher? Pues en _mapDispatchToProps_ tenemos acceso la mismo, y lo que hacemos es definir una función (que después el componente presentacional la tendrá como _prop_) en la que recibimos el nuevo nombre, lo empaquetamos en la acción de _createUpdateUserNameAction_ y se lo pasamos al dispatcher, el dispatcher se va a encargar de pasearlo por todos los reducers para que vean si es su parada y actualicen estado.
+
+En el connect añadimos como segundo parámetro el _mapDispatchToProps_.
+
+> Como curiosidad el tercer parámetro de connect es _mergeProps_ que nos permite mezclar las propiedades que vienen del estado y las que vienen de las acciones (si ves algo de esto en código legacy es que se metieron en un buen berenjenal)
+
+Así que ahora vamos a actualizarlo en el componente, a destacar aquí, como en las props y los narcos, el componente no sabe nada de redux, sólo sabe que le pasan una propiedad _onUpdateUserName_ que es una función que recibe un nombre y lo actualiza.
+
+_./src/user-profile/user-profile.component.tsx_
+
+```diff
+import React from "react";
+
+export interface UserProfileProps {
+  name: string;
++ onUpdateUserName: (name: string) => void;
+}
+
+
+- export const UserProfileComponent: React.FC<UserProfileProps> = ({ name }) => {
++ export const UserProfileComponent: React.FC<UserProfileProps> = ({ name, onUpdateUserName }) => {
+  return (
+    <>
+      <h2>User Profile</h2>
+      <div>
+        <label>Nombre:</label>
+        <span>{name}</span>
++       <input value={name} onChange={e => onUpdateUserName(e.target.value)}>
+      </div>
+    </>
+  );
+};
+```
+
+Y ahora tenemos funcionando este ejemplo.
+
+Seguramente estarás pensando... la que hemos liado para una etiqueta y un input :), tienes toda la razón, este ejemplo no tendría ningún sentido en la vida real, pero es para que veas como funciona el flujo de Redux, también comentarte en muchos tipos de aplicación tampoco tiene sentido meterse con Redux (cada herramienta tiene su uso, por ejemplo, por muchas ganas que tengas, no te vas a poner a matar moscas con un martillo).
+
+Antes de seguir un apunte interesante, es muy fácil implementar pruebas unitarias en el:
+
+- Reducer.
+- Acciones.
+
+Algo más complicado pero viable en:
+
+- Contenedores.
+- Componentes.
+
+# Tipando
+
+Hay un sitio donde todo este de redux hace aguas con TypeScript y es en tipar las acciones, eso de meter un _any_ en el payload como un castillo, es un coladero de errores.
+
+Vamos a ver como podemos tipar esto:
+
+_./src/actions/base.actions.ts_
+
+```diff
+
++ export const ActionTypes = {
++  UPDATE_USER_NAME: "[USER_PROFILE] Update user name",
++ };
+
++ export type BaseAction =
++  | {type: ActionTypes.UPDATE_USER_NAME, payload: string};
+
+
+- export interface BaseAction {
+-  type: string;
+-  payload: any; // Aupa el any !!
+- }
+```
+
+Y ahora en la acción:
+
+_./src/actions/user-profile.actions.ts_
+
+```diff
+- import { BaseAction } from "./base.actions";
++ import { ActionTypes, BaseAction } from "./base.actions";
+-
+- export const UPDATE_USER_NAME = "[USER_PROFILE] Update user name";
+
+export const createUpdateUserNameAction = (name: string): BaseAction => ({
+-  type: UPDATE_USER_NAME,
++ type: ActionTypes.UPDATE_USER_NAME,
+  payload: name,
+});
+```
+
+Y ahora en el reducer una vez que nos metemos en el case del switch el payload se tipa como string.
+
+Si quieres práctica un poco, podrías probar a meter en ese reducer un apellido y montar toda la fontanería :).
+
+A tener en cuenta:
+
+- Lo normal en una aplicación real es que tengas varios reducers.
+- Cada reducer tiene su propio estado y ésta aislado (no se puede habar directamente con reducers hermanos)
+- Para comunicar reducers se utilizan acciones (que se pasan por todos los reducers).
+- Si necesitas combinar datos de dos reducers, o bien los pides en el mapStateToProps o bien puedes usar campos calculados, había una librería que se llamaba [reselect](https://github.com/reduxjs/reselect) que si la están usando en el proyecto legacy que has entrado te tocará estudiar (es potente pero requiere su tiempo de estudio), o también en redux moderno tienes algo parecido ya incorporado.
+
+# Maquina del tiempo y devools
+
+TODO !!!!
+
 # Sobre estructura de carpetas
 
-por tipo
+La estructura de carpetas que hemos usado, sólo sirve para aprender como va _redux_ en un proyecto pequeño, es lo que se llama dividir una carpeta por tipo de elemento:
 
-por funcionalidad
+Aquí va el árbol de directorio
 
-Agrupamos por area y ponemos prefijos a los grupos de acciones para que no hayan colisiones
+```
+├── actions
+│   ├── base.actions.ts
+│   └── user-profile.actions.ts
+├── reducers
+│   ├── index.ts
+│   └── user-profile.reducer.ts
+├── user-profile
+│   ├── index.ts
+│   ├── user-profile.component.tsx
+│   └── user-profile.container.tsx
+├── App.css
+├── App.tsx
+├── index.tsx
+```
 
-fumadas de todos los colores
+pero en un proyecto real, lo normal es que tengas una estructura de carpetas por funcionalidad, es decir:
 
----
+```
+├── core
+│   ├── base.actions.ts
+│   ├── root.store.ts
+│   ├── common.actions.ts
+│   ├── common.reducers.ts
+├── pods
+│   ├── profile
+│   |   ├── profile.actions.ts
+│   |   ├── profile.reducers.ts
+│   |   ├── profile.component.ts
+│   |   ├── profile.container.ts
+```
 
---> Como curiosidad comentar que la fumada de redux viene de ELM;
+Y bueno aquí te puedes encontrar _fumadas_ de todos los colores, estudia bien como está todo organizado en tu proyecto legacy e intenta ser consistente cuando actualices código.
+
+# Curiosidades
+
+Redux está fuertemente inspirado en ELM, un lenguaje funcional que se ejecuta en el navegador, si te interesa el tema, puedes ver este vídeo: https://www.youtube.com/watch?v=NYb2GDWMIm0
+
+¿Por qué se hizo tan popular Redux? Porque en React no había forma de manejar datos globales, el React Context apareció luego (al menos la versión estable)
+
+Aplicaciones en las que puede tener sentido usar Redux:
+
+- En una aplicación de un juego de tablero (ajedrez, dominó...), puedes ser interesante tener el estado en Redux si algo falla, puedes grabar los pasos completos y reproducirlo.
+- En una aplicación como Slack (varios canales, actualizaciones, ....)
+
+Donde no suele tener sentido, en una aplicación de gestión al uso.
