@@ -93,11 +93,24 @@ _./src/actions/members.actions.ts_
 
 ```ts
 import { GithubMemberEntity } from "../model/github-member.model";
+import { BaseAction, ActionTypes } from "./base.actions";
 
-export const fetchMembersCompleted = (members: GithubMemberEntity[]) => ({
-  type: "FETCH_MEMBERS_COMPLETED",
+export const fetchMembersCompleted = (
+  members: GithubMemberEntity[]
+): BaseAction => ({
+  type: ActionTypes.FETCH_MEMBERS_COMPLETED,
   payload: members,
 });
+```
+
+Lo exportamos en el barrel:
+
+_./src/actions/index.ts_
+
+```diff
+export * from "./base.actions";
+export * from "./user-profile.actions";
++ export * from "./member.actions";
 ```
 
 Y ahora el thunk para que invoque a la API y cuando se resuelva a la acción de completado:
@@ -114,11 +127,13 @@ _./src/App.tsx_
 
 ```diff
 import "./App.css";
-import { createStore, compose } from "redux";
+- import { createStore, compose } from "redux";
++ import { createStore, compose, applyMiddleware } from "redux";
 import { Provider } from "react-redux";
++ import thunk from "redux-thunk";
 import { rootReducer } from "./reducers";
 import { UserProfileContainer } from "./user-profile";
-+ import thunk from "redux-thunk";
+
 
 
 // TypeScript: https://www.mydatahack.com/getting-redux-devtools-to-work-with-typescript/
@@ -143,13 +158,16 @@ _./src/actions/members.actions.ts_
 ```diff
 import { GithubMemberEntity } from "../model/github-member.model";
 + import { getMembers } from "../api/github.api";
++ import { Dispatch } from "redux";
+import { BaseAction, ActionTypes } from "./base.actions";
+
 
 export const fetchMembersCompleted = (members: GithubMemberEntity[]) => ({
-  type: "FETCH_MEMBERS_COMPLETED",
+  type: ActionTypes.FETCH_MEMBERS_COMPLETED,
   payload: members,
 });
 
-+ export cont fetchMembersRequest = () => (dispatch) => {
++ export const fetchMembersRequest = () => (dispatch : Dispatch<BaseAction>) => {
 +   getMembers().then((members) => {
 +     dispatch(fetchMembersCompleted(members));
 +   });
@@ -174,10 +192,10 @@ _./src/reducers/members.reducer.ts_
 ```ts
 import { GithubMemberEntity } from "../model/github-member.model";
 import { BaseAction } from "../actions";
-import { ActionTypes } from "../actions/actionTypes";
+import { ActionTypes } from "../actions";
 
 const handleFetchMembersCompleted = (
-  state: GithubMemberEntity[],
+  _: GithubMemberEntity[],
   members: GithubMemberEntity[]
 ) => [...members];
 
@@ -193,6 +211,8 @@ export const membersReducer = (
   return state;
 };
 ```
+
+> EL \_ es porque no vamos a usar el primer parámetro, pero no podemos dejarlo vacío porque el compilador de TS se quejaría.
 
 Ya tenemos el reducer, ahora lo tenemos que añadir al rootReducer:
 
@@ -226,7 +246,7 @@ Vamos a estilarlo:
 _./src/member-list/member-list.module.css_
 
 ```css
-.list-user-list-container {
+.container {
   display: grid;
   grid-template-columns: 80px 1fr 3fr;
   grid-template-rows: 20px;
@@ -234,13 +254,13 @@ _./src/member-list/member-list.module.css_
   grid-gap: 10px 5px;
 }
 
-.list-header {
+.header {
   background-color: #2f4858;
   color: white;
   font-weight: bold;
 }
 
-.list-user-list-container > img {
+.container > img {
   width: 80px;
 }
 ```
@@ -250,6 +270,7 @@ _./src/member-list/member-list.component.tsx_
 ```ts
 import * as React from "react";
 import { GithubMemberEntity } from "../model";
+import classes from "./member-list.component.module.css";
 
 interface Props {
   members: GithubMemberEntity[];
@@ -264,14 +285,16 @@ export const MemberListComponent = (props: Props) => {
   return (
     <>
       <h2>Members Page</h2>
-      <div className="list-user-list-container">
-        <span className="list-header">Avatar</span>
-        <span className="list-header">Id</span>
-        <span className="list-header">Name</span>
+      <div className={classes.container}>
+        <span className={classes.header}>Avatar</span>
+        <span className={classes.header}>Id</span>
+        <span className={classes.header}>Name</span>
         {props.members.map((member) => (
-          <img src={member.avatar_url} />
-          <span>{member.id}</span>
-          <span>{member.login}</span>
+          <React.Fragment key={member.id}>
+            <img src={member.avatar_url} />
+            <span>{member.id}</span>
+            <span>{member.login}</span>
+          </React.Fragment>
         ))}
       </div>
     </>
@@ -284,18 +307,17 @@ Vamos a crear ahora el container:
 _./src/member-list/member-list.container.tsx_
 
 ```tsx
-import * as React from "react";
 import { connect } from "react-redux";
 import { Dispatch } from "redux";
 import { AppState } from "../reducers";
 import { MemberListComponent } from "./member-list.component";
-import { fetchMembersRequest } from "../actions";
+import { BaseAction, fetchMembersRequest } from "../actions";
 
 const mapStateToProps = (state: AppState) => ({
   members: state.members,
 });
 
-const mapDispatchToProps = (dispatch: Dispatch) => ({
+const mapDispatchToProps = (dispatch: Dispatch<BaseAction>) => ({
   loadMembers: () => dispatch(fetchMembersRequest()),
 });
 
@@ -303,6 +325,29 @@ export const MemberListContainer = connect(
   mapStateToProps,
   mapDispatchToProps
 )(MemberListComponent);
+```
+
+¡¡ Aquí nos peta el tipado !! Por supuesto y es que ese dispatch espera una acción y no un thunk hackie :), toca crear un tipo que soporte o dispatch o thunk:
+
+```diff
+import { connect } from "react-redux";
+import { Dispatch } from "redux";
+import { AppState } from "../reducers";
+import { MemberListComponent } from "./member-list.component";
+import { BaseAction, fetchMembersRequest } from "../actions";
+
+const mapStateToProps = (state: AppState) => ({
+  members: state.members,
+});
+
++ // Toma leche con moloko !!
++ // Esto habría que darle una vuelta para hacerlo más elegante
++ type DispatchWithThunk = Dispatch<BaseAction> | ((arg: any) => void);
+
+- const mapDispatchToProps = (dispatch: Dispatch<BaseAction>) => ({
++ const mapDispatchToProps = (dispatch: DispatchWithThunk) => ({
+  loadMembers: () => dispatch(fetchMembersRequest()),
+});
 ```
 
 Exponerlo en un barrel
@@ -333,12 +378,17 @@ function App() {
       <Provider store={store}>
         <header>Redux 2023 - Boilerplate</header>
         <UserProfileContainer />
-+      <MemberListContainer />
++        <MemberListContainer />
       </Provider>
     </>
   );
 }
 ```
+
+Si ahora las devtools te darás cuenta de dos cosas:
+
+- La acción de fetchMembersRequest no aparece en las devtools, es thunk (una función) y no es acción ninguna.
+- Se llama dos veces a la acción _FetchMembersCompleted_, en las ultimas versión de React, en desarrollo los componentes se montan dos veces, te aconsejan que pases de _useEffect []_ para hacer llamadas a API Rest y que uses librerías como React Query o tires de frameworks.
 
 # Sagas
 
