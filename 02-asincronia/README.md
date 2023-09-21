@@ -15,26 +15,6 @@ Así que nos tenemos que inventar algo, aquí el gran Dan Abramov se saco una ge
 
 Partimos del código del ejemplo anterior, vamos a leer de la API Rest de Github, la lista de miembros que pertenecen a Lemoncode y mostrarla por pantalla... todo pasando por Redux.
 
-## API
-
-Vamos a implementar un método para leer los miembros de una organización de Github, para ello vamos a usar la API Rest de Github:
-
-_./src/api/github.api.ts_
-
-```ts
-
-```
-
-> Ojo, no uses esta estructura de carpetas para un proyecto real, si quieres ver como trabajar con estructuras: https://github.com/Lemoncode/lemon-front-estructura
-
-## Redux Thunk
-
-Vamos a instalar Thunk
-
-Vamos a crear una acción que se ejecutará cuando la acción se resuelva:
-
-Y ahora el thunk para que invoque a la API y cuando se resuelva a la acción de completado
-
 ## API de Github
 
 Esta parte no tiene que ver nada con Redux, simplemente vamos a hacer una llamada asíncrona contra una API Rest y utilizaremos la librería _axios_ para realizar la llamada.
@@ -47,7 +27,7 @@ Vamos a implementar la llamada a la API de Github para obtener los miembros de u
 
 Definimos un modelo:
 
-_./src/model/github-members.model.ts_
+_./src/model/github-member.model.ts_
 
 ```ts
 export interface GithubMemberEntity {
@@ -57,18 +37,31 @@ export interface GithubMemberEntity {
 }
 ```
 
+Y su barrel:
+
+_./src/model/index.ts_
+
+```ts
+export * from "./github-member.model";
+```
+
 _./src/api/github.api.ts_
 
 ```ts
-import axios from 'axios';
-import { GithubMemberEntity } from '../model/github-member.model';
+import axios from "axios";
+import { GithubMemberEntity } from "../model/github-member.model";
 
-const url = 'https://api.github.com/orgs/lemoncode/members';
+const url = "https://api.github.com/orgs/lemoncode/members";
 
-export const getMembers = () : Promise<GithubMemberEntity[]> => axios.get(url).then((response) => response.data);
+export const getMembers = (): Promise<GithubMemberEntity[]> =>
+  axios.get(url).then((response) => response.data);
 ```
 
-### Thunk
+> Ojo, no uses esta estructura de carpetas para un proyecto real, si quieres ver como trabajar con estructuras: https://github.com/Lemoncode/lemon-front-estructura
+
+### Redux Thunk
+
+Vamos a instalar Thunk
 
 Vamos a crear una acción que se ejecutará cuando tengamos resuelta la llamada.
 
@@ -81,18 +74,17 @@ _./src/actions/base.actions.ts_
 _./src/actions/members.actions.ts_
 
 ```ts
-import { GithubMemberEntity } from '../model/github-member.model';
+import { GithubMemberEntity } from "../model/github-member.model";
 
 export const fetchMembersCompleted = (members: GithubMemberEntity[]) => ({
-  type: 'FETCH_MEMBERS_COMPLETED',
+  type: "FETCH_MEMBERS_COMPLETED",
   payload: members,
 });
 ```
 
+Y ahora el thunk para que invoque a la API y cuando se resuelva a la acción de completado
 
 ### Reducer
-
-
 
 # Sagas
 
