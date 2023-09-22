@@ -224,3 +224,197 @@ export default App;
 ```
 
 Vamos a ver que todo funciona y recapitulamos.
+
+# Async - Github Members
+
+¿Y los Thunk como funcionan con el nuevo Toolkit? Pues resulta que los trae incorporado.
+
+## API
+
+Esto no tiene que ver con Redux.
+
+Utilizaremos Axios:
+
+```bash
+npm install axios
+```
+
+Vamos a crear una feature para los miembros de github, y añadir el modelo y la api.
+
+_./src/features/github-members/github-members.model.ts_
+
+```typescript
+export interface GithubMember {
+  id: number;
+  login: string;
+  avatar_url: string;
+}
+```
+
+Vamos a crear un fichero de api para leer los datos con axios:
+
+_./src/features/github-members/github-members.api.ts_
+
+```typescript
+import axios from "axios";
+import { GithubMember } from "./github-members.model";
+
+export const fetchMembers = async () => {
+  const response = await axios.get<GithubMember[]>(
+    "https://api.github.com/orgs/lemoncode/members"
+  );
+  return response.data;
+};
+```
+
+Vamos a crear un slice para los miembros de github:
+
+_./src/features/github-members/github-members.slice.ts_
+
+```typescript
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { fetchMembers } from "./github-members.api";
+import { GithubMember } from "./github-members.model";
+
+export interface GithubMembersState {
+  members: GithubMember[];
+}
+
+const initialState: GithubMembersState = {
+  members: [],
+};
+
+export const githubMembersSlice = createSlice({
+  name: "githubMembers",
+  initialState,
+  reducers: {
+    setMembers: (state, action: PayloadAction<GithubMember[]>) => {
+      state.members = action.payload;
+    },
+  },
+});
+
+export const { setMembers } = githubMembersSlice.actions;
+
+export const fetchMembersAsync = createAsyncThunk(
+  "githubMembers/fetchMembers",
+  async () => {
+    const members = await fetchMembers();
+    return members;
+  }
+);
+
+export const selectMembers = (state: { githubMembers: GithubMembersState }) =>
+  state.githubMembers.members;
+
+export default githubMembersSlice.reducer;
+```
+
+Vamos añadir ese slice al store:
+
+_./src/app-store/store.ts_
+
+```diff
+import { configureStore } from "@reduxjs/toolkit";
+import userProfileReducer from "../features/user-profile/user-profile.slice";
++ import githubMembersReducer from "../features/github-members/github-members.slice";
+
+export const store = configureStore({
+  reducer: {
+    userProfile: userProfileReducer,
++    githubMembers: githubMembersReducer,
+  },
+});
+
+// Aquí sacamos el tipo de RootState del state con typeof
+export type RootState = ReturnType<typeof store.getState>;
+// Y aquí lo mismo sacamos el tipo del dispatch y las acciones del typeof del dispatch
+export type AppDispatch = typeof store.dispatch;
+```
+
+Y ahora vamos a crear el componente que va a usar el slice, primero ponemos el estilado:
+
+_./src/features/github-members/github-members.component.module.css_
+
+```css
+.container {
+  display: grid;
+  grid-template-columns: 80px 1fr 3fr;
+  grid-template-rows: 20px;
+  grid-auto-rows: 80px;
+  grid-gap: 10px 5px;
+}
+
+.header {
+  background-color: #2f4858;
+  color: white;
+  font-weight: bold;
+}
+
+.container > img {
+  width: 80px;
+}
+```
+
+Y ahora el componente:
+
+_./src/features/github-members/github-members.component.tsx_
+
+```typescript
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMembersAsync, selectMembers } from "./github-members.slice";
+import styles from "./github-members.component.module.css";
+
+export const GithubMembersComponent = () => {
+  const members = useSelector(selectMembers);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(fetchMembersAsync());
+  }, []);
+
+  return (
+    <div>
+      <h2>Github Members</h2>
+      <div className={styles.container}>
+        <div className={styles.header}>Avatar</div>
+        <div className={styles.header}>Id</div>
+        <div className={styles.header}>Login</div>
+        {members.map((member) => (
+          <React.Fragment key={member.id}>
+            <img src={member.avatar_url} alt="avatar" />
+            <div>{member.id}</div>
+            <div>{member.login}</div>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+Y vamos a usarlo:
+
+_./src/App.tsx_
+
+```diff
+import "./App.css";
+import { UserProfileComponent } from "./features/user-profile/user-profile.component";
++ import { GithubMembersComponent } from "./features/github-members/github-members.component";
+
+function App() {
+  return (
+    <>
+      <header>Redux 2023 - Boilerplate</header>
+      <main>
+        <UserProfileComponent />
++       <GithubMembersComponent />
+      </main>
+    </>
+  );
+}
+
+export default App;
+
+```
