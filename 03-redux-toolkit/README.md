@@ -25,6 +25,12 @@ npm install @reduxjs/toolkit react-redux
 
 > También se puede arrancar tirando de plantillas, hay una [plantilla oficial en Vite](https://github.com/reduxjs/redux-templates), y aquí las instrucciones para configurarla: https://redux-toolkit.js.org/introduction/getting-started
 
+Ya podemos dejar corriendo nuestro servidor local:
+
+```bash
+npm run dev
+```
+
 # Estructura de la aplicación
 
 Redux toolkit nos da ya una estructura para arrancarnos, el árbol que queda:
@@ -93,7 +99,7 @@ _./src/app-store/store.ts_
 
 ```ts
 import { configureStore } from "@reduxjs/toolkit";
-import userProfileReducer from "../features/user-profile";
+import userProfileReducer from "../features/user-profile/user-proflie.slice";
 
 export const store = configureStore({
   reducer: {
@@ -134,7 +140,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 + import { Provider } from 'react-redux';
 import App from './App.tsx';
-+ import store from './app/store';
++ import {store} from "./app-store/store";
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -224,6 +230,12 @@ export default App;
 ```
 
 Vamos a ver que todo funciona y recapitulamos.
+
+Por si no lo teneemos arrancado
+
+```bash
+npm run dev
+```
 
 # Async - Github Members
 
@@ -374,6 +386,7 @@ _./src/features/github-members/github-members.component.tsx_
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembersAsync, selectMembers } from "./github-members.slice";
+import { AppDispatch } from "../../app-store/store";
 import styles from "./github-members.component.module.css";
 
 export const GithubMembersComponent = () => {
