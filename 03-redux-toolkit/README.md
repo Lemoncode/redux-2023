@@ -267,12 +267,19 @@ export const fetchMembers = async () => {
 };
 ```
 
-Vamos a crear un slice para los miembros de github:
+Vamos a crear un slice para los miembros de github, aquí tenemos un poco de _magia_:
+
+- Tenenemos una función de ayuda _createAsyncThunk_ en la que le indicamos el nombre base de la acción y la función asíncrona que queremos ejecutar.
+- En la parte de reducers, tenemos que añadir una sección de _extraReducers_ en la que le indicamos acciones adicionales a escuchar, en este caso el thunk de _fetchMembersAsync_ tiene 3 acciones asociadas: _pending_, _fulfilled_ y _rejected_ (en las devtools puedes ver la pending y la FullFilled), nos enganchamos a la _fulfilled_ y actualizamos el estado.
+
+> Fijate que en las devtools sale duplicado, esto es por lo que comentamos anteriormente, que las últimas version de React por defecto ejecutan dos veces el _useEffect_ al montarse el componente (en desarrollo no).
+
+Para los Thunk hay una función de ayuda que nos permite crearlos
 
 _./src/features/github-members/github-members.slice.ts_
 
 ```typescript
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchMembers } from "./github-members.api";
 import { GithubMember } from "./github-members.model";
 
@@ -284,20 +291,23 @@ const initialState: GithubMembersState = {
   members: [],
 };
 
+const SLICE_NAME = "githubMembers";
+
 export const githubMembersSlice = createSlice({
-  name: "githubMembers",
+  name: SLICE_NAME,
   initialState,
-  reducers: {
-    setMembers: (state, action: PayloadAction<GithubMember[]>) => {
+  reducers: {},
+  extraReducers(builder) {
+    builder.addCase(fetchMembersAsync.fulfilled, (state, action) => {
       state.members = action.payload;
-    },
+    });
   },
 });
 
-export const { setMembers } = githubMembersSlice.actions;
+export const {} = githubMembersSlice.actions;
 
 export const fetchMembersAsync = createAsyncThunk(
-  "githubMembers/fetchMembers",
+  `${SLICE_NAME}/fetchMembers`,
   async () => {
     const members = await fetchMembers();
     return members;

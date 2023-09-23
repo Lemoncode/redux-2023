@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchMembers } from "./github-members.api";
 import { GithubMember } from "./github-members.model";
 
@@ -10,21 +10,23 @@ const initialState: GithubMembersState = {
   members: [],
 };
 
+const SLICE_NAME = "githubMembers";
+
 export const githubMembersSlice = createSlice({
-  name: "githubMembers",
+  name: SLICE_NAME,
   initialState,
-  reducers: {
-    setMembers: (state, action: PayloadAction<GithubMember[]>) => {
+  reducers: {},
+  extraReducers(builder) {
+    builder.addCase(fetchMembersAsync.fulfilled, (state, action) => {
       state.members = action.payload;
-    },
+    });
   },
 });
 
-export const { setMembers } = githubMembersSlice.actions;
+export const {} = githubMembersSlice.actions;
 
 export const fetchMembersAsync = createAsyncThunk(
-  // TODO esto tendríamos que ver de ponerlo sin strings mágicos
-  "githubMembers/setMembers",
+  `${SLICE_NAME}/fetchMembers`,
   async () => {
     const members = await fetchMembers();
     return members;
