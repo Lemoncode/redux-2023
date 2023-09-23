@@ -40,7 +40,7 @@ Que ejemplos te puedes encontrar en este repositorio:
 
 - **03-redux-toolkit**: Este ejemplo parte de _00-boilerplate_, aquí lo que hacemos es recopilar la funcionalidad del ejemplo 01 y 02 (editar nombre y listado de usuarios de Github) y vemos como se hace esto siguiendo la guía del Toolkit, como verás es menos código, se organiza todo mejor, pero... en algunos momentos nos dará la sensación de que estamos usando magia.
 
-## Pasos a futuro
+## 👣 Pasos a futuro
 
 Dependiendo del tirón que tenga este repo, estamos planteando montar más ejemplos:
 
@@ -56,7 +56,7 @@ Dependiendo del tirón que tenga este repo, estamos planteando montar más ejemp
 
 [Redux Sagas en español](https://www.youtube.com/watch?v=oljsA9pry3Q&t=1s)
 
-# ¿Te apuntas a nuestro máster?
+# 👩‍🎓 ¿Te apuntas a nuestro máster?
 
 Si te ha gustado este ejemplo y tienes ganas de aprender Front End guiado por un grupo de profesionales ¿Por qué no te apuntas a nuestro [Máster Front End Online Lemoncode](https://lemoncode.net/master-frontend#inicio-banner)? Tenemos tanto edición de convocatoria con clases en vivo, como edición continua con mentorización, para que puedas ir a tu ritmo y aprender mucho.
 
