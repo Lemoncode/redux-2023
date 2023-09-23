@@ -13,14 +13,22 @@ Así que nos tenemos que inventar algo, aquí el gran Dan Abramov se saco una ge
 
 # Pasos
 
-Partimos del código del ejemplo anterior, vamos a leer de la API Rest de Github, la lista de miembros que pertenecen a Lemoncode y mostrarla por pantalla... todo pasando por Redux.
+Partimos del código del ejemplo anterior, vamos a leer de la API Rest de Github, la lista de miembros que pertenecen a _Lemoncode_ y mostrarla por pantalla... todo pasando por Redux.
 
 ## API de Github
 
 Esta parte no tiene que ver nada con Redux, simplemente vamos a hacer una llamada asíncrona contra una API Rest y utilizaremos la librería _axios_ para realizar la llamada.
 
+Paramos el server local y ejecutamos el siguiente comando:
+
 ```bash
 npm install axios --save
+```
+
+Volvemos a arrancar el server local
+
+```bash
+npm run dev
 ```
 
 Vamos a implementar la llamada a la API de Github para obtener los miembros de una organización:
@@ -60,8 +68,6 @@ export const getMembers = (): Promise<GithubMemberEntity[]> =>
 > Ojo, no uses esta estructura de carpetas para un proyecto real, si quieres ver como trabajar con estructuras: https://github.com/Lemoncode/lemon-front-estructura
 
 ### Redux Thunk
-
-Vamos a instalar Thunk
 
 Vamos a crear una acción que se ejecutará cuando tengamos resuelta la llamada.
 
@@ -243,7 +249,7 @@ Ahora vamos a crear un componente que muestre la lista de miembros, para ello va
 
 Vamos a estilarlo:
 
-_./src/member-list/member-list.module.css_
+_./src/member-list/member-list.component.module.css_
 
 ```css
 .container {
@@ -304,6 +310,8 @@ export const MemberListComponent = (props: Props) => {
 
 Vamos a crear ahora el container:
 
+**AVISO: AQUI NOS VA A PETAR EL TIPADO DEL DISPATCH**
+
 _./src/member-list/member-list.container.tsx_
 
 ```tsx
@@ -327,7 +335,7 @@ export const MemberListContainer = connect(
 )(MemberListComponent);
 ```
 
-¡¡ Aquí nos peta el tipado !! Por supuesto y es que ese dispatch espera una acción y no un thunk hackie :), toca crear un tipo que soporte o dispatch o thunk:
+**¡¡ Aquí nos peta el tipado !!** Por supuesto y es que ese dispatch espera una acción y no un thunk hackie :), toca crear un tipo que soporte o dispatch o thunk:
 
 ```diff
 import { connect } from "react-redux";
