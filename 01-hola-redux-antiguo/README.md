@@ -32,6 +32,12 @@ npm install redux react-redux --save
 
 > ¿Por qué redux y react-redux? Redux es la implementación en JavaScript puro, y react-redux toma como base ésta y le añade la fontanería para que funciona con React.
 
+Volvemos a ejecutar nuestro server local:
+
+```bash
+npm run dev
+```
+
 ## El ejemplo mínimo
 
 Vamos a montar un ejemplo mínimo (que sería un overkill...), vamos a mostrar un nombre de usuario y también vamos a dejar que el usuario lo edite.
@@ -48,7 +54,7 @@ Así que queremos almacenar el nombre del usuario en un estado, ¿Qué vamos a h
 
 - Crear un interfaz que defina ese estado.
 - Usarlo en un reducer
-- Añadir al store (es decir al almacen de estados).
+- Añadir al store (es decir al almacén de estados).
 
 Para verlo paso a paso vamos crear una estructura de carpetas sencilla (en un proyecto real habría que plantear otra).
 
@@ -71,7 +77,9 @@ Es decir aquí:
 
 Vamos ahora a por el reducer (en el mismo fichero):
 
-** Añadir al final \***
+_./src/reducers/user-profile.reducer.ts_
+
+**Añadir al final**
 
 ```tsx
 export const userProfileReducer = (
@@ -81,6 +89,8 @@ export const userProfileReducer = (
   return state;
 };
 ```
+
+> Ojo aquí nos avisa TS que _action_ no lo estamos usando, de momento podemos vivir con eso, si no, podemos renombrar _action_ y poner un \_\_\_ para que no nos de el warning.
 
 ¿Qué estamos haciendo aquí? De momento poca cosa
 
@@ -118,9 +128,9 @@ export const rootReducer = combineReducers<AppState>({
 
 ### Creando el store
 
-Ya tenemos todos los reducers y trozos de estado listo, nos queda crear el gran almacén (el store), y engancharlo en el ciclo de vida de React (para ello definimos un _Provider_ en el nivel más alto de la aplicaión, así desde cualquier punto de la aplicación podremos acceder al mismo).
+Ya tenemos todos los reducers y trozos de estado listo, nos queda crear el gran almacén (el store), y engancharlo en el ciclo de vida de React (para ello definimos un _Provider_ en el nivel más alto de la aplicación, así desde cualquier punto de la aplicación podremos acceder al mismo).
 
-Para ello en _./src/index.ts_ lo definimos:
+Para ello en _./src/app.tsx_ lo definimos:
 
 _./src/app.tsx_
 
@@ -168,7 +178,8 @@ _./src/App.tsx_
 
 ```diff
 import "./App.css";
-import { createStore } from "redux";
+- import { createStore } from "redux";
++ import { compose, createStore } from "redux";
 import { Provider } from "react-redux";
 import { rootReducer } from "./reducers";
 
@@ -192,9 +203,10 @@ const store = createStore(rootReducer
 
 - Segundo chequeamos si existe (si no están las redux dev tools instaladas nos devuelve undefined), así que si lo está usamos el compose de las devtools, si no el compose que trae redux.
 
-- Despues añadimos ese middleware al store.
+- Después añadimos ese middleware al store.
 
 - Primero comprobar si están instaladas las _devtools_ de redux (si lo están hay una variable global en el objeto _window_ del navegador que se llama '**REDUX_DEVTOOLS_EXTENSION**'.
+
 - En caso de que exista la añadimos como middleware a nuestro store (de ahí que lo invoquemos como función).
 
 > A tener en cuenta: en producción igual no queremos que esto aparezca, así que te hará falta en un proyecto real comprobar si estás haciendo build para producción o desarrollo para activarlo o desactivarlo (como curiosidad aplicaciones como _slack_ o _bitbucket_ estaban por defecto conectadas a las devtools en producción).
@@ -308,7 +320,9 @@ function App() {
       <Provider store={store}>
         <header>Redux 2023 - Boilerplate</header>
 -        <main>Aquí van las demos..</main>
-+        <UserProfilecontainer/>
++        <main>
++         <UserProfilecontainer/>
++        </main>
       </Provider>
     </>
   );
@@ -350,7 +364,7 @@ El autobus que va recogiendo trabajadores es el dispatcher.
 
 Así pues vamos a definir un acción que nos permita modificar el nombre del usuario:
 
-Primero definimos un tipo base para las acciones (de momento tiramos de _any_ para el payload, despues tiraremos más info ¿Por qué _any_ porque en una aplicación tendremos multiples acciones y cada una tendrá un payload diferente, así que no podemos definir un tipo base para todas... bueno después veremos un truco).
+Primero definimos un tipo base para las acciones (de momento tiramos de _any_ para el payload, después tiraremos más info ¿Por qué _any_ porque en una aplicación tendremos multiples acciones y cada una tendrá un payload diferente, así que no podemos definir un tipo base para todas... bueno después veremos un truco).
 
 _./src/actions/base.actions.ts_
 
@@ -392,7 +406,7 @@ Vamos ahora a usarla en nuestro reducer:
 _./src/reducers/user-profile.reducer.ts_
 
 ```diff
-+ import { BaseAction } from "../actions";
++ import { BaseAction, UPDATE_USER_NAME } from "../actions";
 
 export interface UserProfileState {
   name: string;
@@ -433,7 +447,7 @@ Si te fijas esta actualización es inmutable, es decir lo que era el estado actu
 - Si no te suena lo que son _los tres puntitos_ (spread operator), te toca ponerte a estudiar ES6: https://developer.mozilla.org/es/docs/Web/JavaScript/Referencia/Operadores/Spread_operator
 - La recomendación actual es utilizar una librería como _immer_ para gestionar la inmutabilidad: https://immerjs.github.io/immer/docs/introduction
 
-Otro palabro más para terminar _un reducer_ se dice que es una _función pura_ ¿Esto que es?
+Otro _palabro_ más para terminar _un reducer_ se dice que es una _función pura_ ¿Esto que es?
 
 Una función que no tiene efectos secundarios, es decir que no modifica nada fuera de ella, sólo devuelve un valor en función de los parámetros de entrada.
 
@@ -537,6 +551,7 @@ export interface UserProfileProps {
       <div>
         <label>Nombre:</label>
         <span>{name}</span>
++        <br/>
 +       <input value={name} onChange={e => onUpdateUserName(e.target.value)}>
       </div>
     </>
@@ -656,7 +671,7 @@ Esto es una pasada, de hecho un juego de tablero online, lo utilizamos de la sig
 
 - El usuario empieza partida.
 - La aplicación peta
-- Recibimos como parte del log la reproducción completa de los pasos que dió el usuario (eliminibamos antes datos sensible como la clave).
+- Recibimos como parte del log la reproducción completa de los pasos que dió el usuario (eliminábamos antes datos sensible como la clave del usuario).
 - Así podíamos reproducir paso a paso que hizo el jugador.
 
 ¿Esto parece chulo verdad? Pues el precio que te toca pagar es alto:
