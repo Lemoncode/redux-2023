@@ -11,7 +11,7 @@ Si has llegado aquí es porque:
 
 ¿Qué te puedes encontrar en este repo? Unas demos básicas de como se utilizaba Redux en 2016-2019 (seguramente el proyecto en el que hayas caído), y otras utilizando Redux Toolkit 2019-... (seguramente no estés usando esto en el proyecto y no te dejen).
 
-Son demos muy básicas, cada una de las demos tiene una guía paso a paso (readme.md) para que las puedes hacer desde cero, también se incluyen explicaciones y referencias a librerías adicionales que se usaban en su día.
+Son demos muy básicas, **cada una de las demos tiene una guía paso a paso (readme.md) para que las puedes hacer desde cero**, también se incluyen explicaciones y referencias a librerías adicionales que se usaban en su día.
 
 ## 🌋 ¿Por qué un proyecto Redux dicen que es un infierno?
 
